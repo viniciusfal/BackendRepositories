@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 
- const { v4: uuid, validate: isUuid } = require('uuid');
+const { v4: uuid, validate: isUuid } = require('uuid');
 
 const app = express();
 
@@ -14,15 +14,15 @@ app.get("/repositories", (request, response) => {
 
   const { title } = request.query;
 
-  const result = title 
+  const result = title
     ? repositories.filter(repository => repository.title.includes(title))
     : repositories;
 
-    return response.json(result);
+  return response.json(result);
 });
 
 app.post("/repositories", (request, response) => {
-  
+
   const { title, url, techs } = request.body;
 
   const repository = {
@@ -44,8 +44,8 @@ app.put("/repositories/:id", (request, response) => {
 
   const repositoryIndex = repositories.findIndex(repository => repository.id == id);
 
-  if (repositoryIndex < 0) {
-    return response.status(400).json({error: 'Project not a found'});
+  if (repositoryIndex === -1) {
+    return response.status(400).json({ error: 'Project not a found' });
   }
 
   const repository = {
@@ -53,6 +53,7 @@ app.put("/repositories/:id", (request, response) => {
     title,
     url,
     techs,
+    likes: repositories[repositoryIndex].likes //Show the numbers of likes
   };
 
   repositories[repositoryIndex] + repository;
@@ -63,19 +64,30 @@ app.put("/repositories/:id", (request, response) => {
 app.delete("/repositories/:id", (request, response) => {
   const { id } = request.params;
 
-  const repositoryIndex = repositories.findIndex(repository => repository.id == id);
+  const repositoryIndex = repositories.findIndex(repository => repository.id === id);
 
-  if (repositoryIndex < 0) {
-    return response.status(400).json({error: 'Project not a found'})
-  };
+  if (repositoryIndex > 0) {
+    repositories.splice(repositoryIndex, 1);
+  } else {
+    return response.status(400).json({ error: 'Repository does not exists!' }) //400 = bad request
+  }
 
-  repositories.splice(repositoryIndex, 1);
-  
-  return response.status(204).send();
+
+  return response.status(204).send(); //204 = no content
 });
 
 app.post("/repositories/:id/like", (request, response) => {
-  // TODO
+  const { id } = request.params; //Search id of request
+
+  const repositoryIndex = repositories.findIndex(repository => repository.id === id); //Search for the repository that contains the same id for that scope
+
+  if (repositoryIndex === -1) {
+    return response.status(400).json({ error: 'Repository does not exists' }) // If the index does not exist, or is not found.
+  };
+
+  repositories[repositoryIndex].likes++ // look for the indexId of the repository, take the likes it contains and add 1 the sum of what I already had
+
+  return response.json(repositories[repositoryIndex]);
 });
 
 module.exports = app;
